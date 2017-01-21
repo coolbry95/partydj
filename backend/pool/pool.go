@@ -66,8 +66,8 @@ func (p *Pool) Less(i, j int) bool {
 
 func (p *Pool) Swap(i, j int) {
 	p.SongHeap[i], p.SongHeap[j] = p.SongHeap[j], p.SongHeap[i]
-	p.SongHeap[i].Priority = i
-	p.SongHeap[j].Priority = j
+	p.SongHeap[i].index = i
+	p.SongHeap[j].index = j
 }
 
 func (p *Pool) Push(x interface{}) {
