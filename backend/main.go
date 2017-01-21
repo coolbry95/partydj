@@ -44,21 +44,14 @@ func main() {
 		log.Println(r.URL.String())
 	})
 	r.Get("/callback", completeAuth)
-	r.Get("/pool", d.getPool)
-	r.Get("/pool/:poolID", d.getPool)
-	//r.Post("/add_song/:poolID/:songID", handle)
-	//r.Post("/upvote/:poolID/:songID", handle)
-	//r.Post("/down/:poolID/:songID", handle)
+	r.Get("/getpool", d.getPool)
+	r.Post("/createpool", d.createPool)
+	r.Post("/add_song/:poolID/:songID", d.addSong)
+	r.Post("/upvote/:poolID/:songID", d.upVote)
+	r.Post("/downvote/:poolID/:songID", d.downVote)
 
 	url := auth.AuthURL(state)
-	//fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
-	/*
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Println(err)
-	}
-	_ = resp
-	*/
+	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
 	go http.ListenAndServe(":6060", r)
 
@@ -79,12 +72,42 @@ func main() {
 
 }
 
+func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
+	// TODO check for user ID to see if they already voted
+	songID := chi.URLParam(r, "songID")
+	//poolID := chi.URLParam(r, "poolID")
+
+	d.pool.UpVote(spotify.ID(songID))
+
+	// update playlist
+}
+
+func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
+	// TODO check for user ID to see if they already voted
+	songID := chi.URLParam(r, "songID")
+	//poolID := chi.URLParam(r, "poolID")
+
+	d.pool.DownVote(spotify.ID(songID))
+
+	// update playlist
+
+}
+
+func (d *DI) createPool(w http.ResponseWriter, r *http.Request) {
+}
+
 func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	userid, err := d.client.CurrentUser()
 	if err != nil {
 		log.Println(err)
 	}
 
+	// TODO: instead of using existing playlist we require a new playlist to be created
+	// playlist, err := d.client.CreatePlaylistForUser(userid.ID, playlistName, true)
 	playlist, err := d.client.GetPlaylistTracks(userid.ID, "0nXlYUH7zBAzubO9Yub4rR")
 	if err != nil {
 		log.Println(err)
@@ -92,7 +115,7 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 
 	d.pool.SongHeap = make([]*pool.Song, 0, 2)
 	for _, track := range playlist.Tracks {
-		s := &pool.Song{ID: track.Track.ID }
+		s := &pool.Song{ID: track.Track.ID}
 		d.pool.SongHeap = append(d.pool.SongHeap, s)
 	}
 
@@ -117,4 +140,5 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	//fmt.Fprintf(w, "Login Completed!")
 	//ch <- &client
 	ch <- client
+	http.Redirect(w, r, "/newpool", 301)
 }
