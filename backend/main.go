@@ -121,7 +121,14 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 
 	d.pool.SongHeap = make([]*pool.Song, 0, 2)
 	for _, track := range playlist.Tracks {
-		s := &pool.Song{ID: track.Track.ID}
+		s := &pool.Song{
+			ID: track.Track.ID,
+			Name: track.Track.Name,
+			Duration: track.Track.Duration,
+			Album: track.Track.Album.Name,
+			Images: track.Track.Album.Images,
+			Artists: track.Track.Artists,
+		}
 		d.pool.SongHeap = append(d.pool.SongHeap, s)
 	}
 
@@ -144,5 +151,5 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
 	ch <- client
-	http.Redirect(w, r, "/newpool", 301)
+	http.Redirect(w, r, "/getpool", 301)
 }
