@@ -37,6 +37,15 @@ func (p *Pool) UpVote(id spotify.ID) {
 	}
 }
 
+func (p *Pool) DownVote(id spotify.ID) {
+	if song := p.FindSong(id); song != nil {
+		song.Downvotes++
+		p.update(song, song.Priority - 1)
+	} else {
+		fmt.Println("(DownVote) DID NOT FIND SONG")
+	}
+}
+
 func (p *Pool) FindSong(id spotify.ID) *Song {
 	for i := range p.SongHeap{
 		if p.SongHeap[i].ID == id{

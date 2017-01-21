@@ -24,9 +24,9 @@ func SetupPool() *Pool {
 func TestPool_Push(t *testing.T) {
 	samplePool := SetupPool()
 	songPushed := &Song{Priority: 100, ID: spotify.ID("10")}
-	samplePool.Push(songPushed)
+	heap.Push(samplePool, songPushed)
 
-	if popped := samplePool.Pop(); popped.(*Song).ID != songPushed.ID {
+	if popped := heap.Pop(samplePool); popped.(*Song).ID != songPushed.ID {
 		t.Errorf("expected %s, got %s", songPushed.ID, popped.(*Song).ID)
 	}
 }
@@ -43,10 +43,25 @@ func TestPool_UpVote(t *testing.T) {
 	samplePool := SetupPool()
 	targetSongId := spotify.ID("3")
 
+	// Avoid the priority being equivalent
 	samplePool.UpVote(targetSongId)
 	samplePool.UpVote(targetSongId)
 
 	if popped := heap.Pop(samplePool); popped.(*Song).ID != targetSongId {
+		t.Errorf("expected %s, got %s", targetSongId.String(), popped.(*Song).ID)
+	}
+}
+
+func TestPool_DownVote(t *testing.T) {
+	samplePool := SetupPool()
+	targetSongId := spotify.ID("4")
+	newLargestSongId := spotify.ID("3")
+
+	// Avoid the priority being equivalent
+	samplePool.DownVote(targetSongId)
+	samplePool.DownVote(targetSongId)
+
+	if popped := heap.Pop(samplePool); popped.(*Song).ID != newLargestSongId {
 		t.Errorf("expected %s, got %s", targetSongId.String(), popped.(*Song).ID)
 	}
 }
