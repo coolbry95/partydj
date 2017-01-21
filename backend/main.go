@@ -25,45 +25,57 @@ const redirectURI = "https://linode.shellcode.in/callback"
 
 var (
 	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate)
-	ch    = make(chan *spotify.Client)
+	ch    = make(chan spotify.Client)
 	state = "stateless"
 )
 
 type DI struct {
-	client *spotify.Client
+	client spotify.Client
 	pool   pool.Pool
 }
 
 func main() {
 
 	var d *DI
-
+	d = new(DI)
 
 	r := chi.NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.URL.String())
 	})
-	r.Post("/callback", completeAuth)
-	r.Get("/pool/:poolID", d.getPool)
+	r.Get("/callback", completeAuth)
 	r.Get("/pool", d.getPool)
+	r.Get("/pool/:poolID", d.getPool)
 	//r.Post("/add_song/:poolID/:songID", handle)
 	//r.Post("/upvote/:poolID/:songID", handle)
 	//r.Post("/down/:poolID/:songID", handle)
 
+	url := auth.AuthURL(state)
+	//fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
+	/*
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Println(err)
+	}
+	_ = resp
+	*/
+
+	go http.ListenAndServe(":6060", r)
+
 	// wait for auth to complete
 	d.client = <-ch
+
 	d.pool.PlaylistID = spotify.ID("0nXlYUH7zBAzubO9Yub4rR")
+
 	userID, err := d.client.CurrentUser()
 	if err != nil {
 		log.Println(err)
 	}
+
 	d.pool.UserID = userID.ID
-	fmt.Println(d)
 
-	go http.ListenAndServe(":6060", r)
-
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
+	block := make(chan struct{})
+	<-block
 
 }
 
@@ -72,16 +84,18 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
+
 	playlist, err := d.client.GetPlaylistTracks(userid.ID, "0nXlYUH7zBAzubO9Yub4rR")
 	if err != nil {
 		log.Println(err)
 	}
-	d.pool.SongHeap = make([]*pool.Song, 10)
+
+	d.pool.SongHeap = make([]*pool.Song, 0, 2)
 	for _, track := range playlist.Tracks {
-		var s *pool.Song
-		s.ID = track.Track.ID
+		s := &pool.Song{ID: track.Track.ID }
 		d.pool.SongHeap = append(d.pool.SongHeap, s)
 	}
+
 	json.NewEncoder(w).Encode(d.pool)
 	return
 }
@@ -92,13 +106,15 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Fatal(err)
 	}
+
 	if st := r.FormValue("state"); st != state {
 		http.NotFound(w, r)
 		log.Fatalf("State mismatch: %s != %s\n", st, state)
 	}
+
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
-	fmt.Fprintf(w, "Login Completed!")
-	ch <- &client
-	http.Redirect(w, r, "https://linode.shellcode.in/pool", 300)
+	//fmt.Fprintf(w, "Login Completed!")
+	//ch <- &client
+	ch <- client
 }
