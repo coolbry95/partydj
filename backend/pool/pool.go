@@ -1,37 +1,38 @@
-package Pool
+package pool
 
 import (
 	"time"
-
 	"container/heap"
-	"github.com/zmb3/spotify"
 	"fmt"
+
+	"github.com/zmb3/spotify"
 )
 
 type Pool struct {
-	PlaylistID spotify.ID
-	UserID     string
+	PlaylistID spotify.ID `json:playlistid`
+	UserID     string     `json:userid`
 	// TimeStarted
-	SongHeap []*Song
+	SongHeap []*Song `json:songheap`
 }
 
 type Song struct {
 	ID        spotify.ID
-	Upvotes   int
-	Downvotes int
-	Priority  int
-	index     int // index into the priorty queue
-	TimeAdded time.Time
+	Upvotes   int       `json:upvotes`
+	Downvotes int       `json:downvotes`
+	Priority  int       `json:priority`
+	index     int       `json:index` // index into the priorty queue
+	TimeAdded time.Time `json:timeadded`
 }
 
 func (s *Song) String() string {
-	return "(ID: " + s.ID.String() + " Priority: " + fmt.Sprintf("%d)", s.Priority)
+	return s.ID.String() + ", Priority: " + fmt.Sprintf("%d", s.Priority)
 }
 
 func (p *Pool) UpVote(id spotify.ID) {
 	if song := p.FindSong(id); song != nil {
 		song.Upvotes++
-		p.update(song, song.Priority + 1)
+		song.Priority++
+		p.update(song, song.Priority)
 	} else {
 		fmt.Println("(UpVote) DID NOT FIND SONG")
 	}
@@ -40,15 +41,17 @@ func (p *Pool) UpVote(id spotify.ID) {
 func (p *Pool) DownVote(id spotify.ID) {
 	if song := p.FindSong(id); song != nil {
 		song.Downvotes++
-		p.update(song, song.Priority - 1)
+		song.Priority--
+		p.update(song, song.Priority)
 	} else {
-		fmt.Println("(DownVote) DID NOT FIND SONG")
+		fmt.Println("(UpVote) DID NOT FIND SONG")
 	}
 }
 
 func (p *Pool) FindSong(id spotify.ID) *Song {
-	for i := range p.SongHeap{
-		if p.SongHeap[i].ID == id{
+	for i := range p.SongHeap {
+		if p.SongHeap[i].ID == id {
+			//fmt.Printf("(UpVote) Updated priority of %s is %d\n", v.ID, v.Priority)
 			return p.SongHeap[i]
 		}
 	}
@@ -72,7 +75,6 @@ func (p *Pool) Push(x interface{}) {
 	item := x.(*Song)
 	item.index = n
 	p.SongHeap = append(p.SongHeap, item)
-	fmt.Println(p.SongHeap)
 }
 
 func (p *Pool) Pop() interface{} {
@@ -86,8 +88,9 @@ func (p *Pool) Pop() interface{} {
 
 // update modifies the priority and value of an Item in the queue.
 func (pq *Pool) update(item *Song, priority int) {
+	//fmt.Println("(update) Requested priority: ", priority)
+	//fmt.Println("(update) Old priority of " + item.ID.String(), item.Priority)
 	item.Priority = priority
 	heap.Fix(pq, item.index)
+	//fmt.Println("(update) Updated priority of " + item.ID.String(), item.Priority)
 }
-
-

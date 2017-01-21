@@ -1,4 +1,4 @@
-package Pool
+package pool
 
 import (
 	"container/heap"
