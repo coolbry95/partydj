@@ -65,3 +65,12 @@ func TestPool_DownVote(t *testing.T) {
 		t.Errorf("expected %s, got %s", targetSongId.String(), popped.(*Song).ID)
 	}
 }
+
+func TestPool_FindSong(t *testing.T) {
+	samplePool := SetupPool()
+	targetSongID := spotify.ID("3")
+
+	if found := samplePool.FindSong(spotify.ID("3")); found.ID != targetSongID {
+		t.Errorf("expected %s, got %s", targetSongID, found.ID)
+	}
+}
