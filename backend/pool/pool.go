@@ -31,8 +31,17 @@ func (s *Song) String() string {
 func (p *Pool) UpVote(id spotify.ID) {
 	if song := p.FindSong(id); song != nil {
 		song.Upvotes++
-		//fmt.Printf("(UpVote) Old priority of %s is %d\n", v.ID, v.Priority)
 		song.Priority++
+		p.update(song, song.Priority)
+	} else {
+		fmt.Println("(UpVote) DID NOT FIND SONG")
+	}
+}
+
+func (p *Pool) UpVote(id spotify.ID) {
+	if song := p.FindSong(id); song != nil {
+		song.Downvotes++
+		song.Priority--
 		p.update(song, song.Priority)
 	} else {
 		fmt.Println("(UpVote) DID NOT FIND SONG")
