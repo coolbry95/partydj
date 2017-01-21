@@ -8,6 +8,7 @@
 package main
 
 import (
+	"container/heap"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -73,6 +74,11 @@ func main() {
 }
 
 func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "songID")
+	//poolID := chi.URLParam(r, "poolID")
+
+	s := &pool.Song{ID: spotify.ID(songID)}
+	heap.Push(&d.pool, s)
 
 }
 
