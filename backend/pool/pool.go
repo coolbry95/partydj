@@ -38,7 +38,7 @@ func (p *Pool) UpVote(id spotify.ID) {
 	}
 }
 
-func (p *Pool) UpVote(id spotify.ID) {
+func (p *Pool) DownVote(id spotify.ID) {
 	if song := p.FindSong(id); song != nil {
 		song.Downvotes++
 		song.Priority--
