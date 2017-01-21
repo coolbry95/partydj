@@ -1,27 +1,34 @@
 package pool
 
 import (
-	"time"
 	"container/heap"
 	"fmt"
+	"time"
 
 	"github.com/zmb3/spotify"
 )
 
 type Pool struct {
-	PlaylistID spotify.ID `json:playlistid`
-	UserID     string     `json:userid`
+	PlaylistID spotify.ID `json:"playlistid"`
+	UserID     string     `json:"userid"`
 	// TimeStarted
-	SongHeap []*Song `json:songheap`
+	SongHeap []*Song `json:"songheap"`
 }
 
 type Song struct {
 	ID        spotify.ID
-	Upvotes   int       `json:upvotes`
-	Downvotes int       `json:downvotes`
-	Priority  int       `json:priority`
-	index     int       `json:index` // index into the priorty queue
-	TimeAdded time.Time `json:timeadded`
+	Upvotes   int       `json:"upvotes"`
+	Downvotes int       `json:"downvotes"`
+	Priority  int       `json:"priority"`
+	index     int       `json:"index"` // index into the priorty queue
+	TimeAdded time.Time `json:"timeadded"`
+
+	// meta
+	Album    string                 `json:"albumname"`
+	Images    []spotify.Image        `json:"images"`
+	Artists  []spotify.SimpleArtist `json:"artists"`
+	Duration int                    `json"duration"`
+	Name     string                 `json:"name"`
 }
 
 func (s *Song) String() string {
