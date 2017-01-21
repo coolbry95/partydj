@@ -1,0 +1,40 @@
+footer > .play {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  max-width: 1000px;
+  height: 60px;
+  background: rgba(10, 10, 10, 0.5);
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-content: flex-start;
+}
+
+footer > .play .cover {
+  width: 45px;
+  height: 45px;
+  margin: 7px;
+  -webkit-box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+  -moz-box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+  box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+}
+
+footer > .play .meta {
+  color: lightgray;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-around;
+  align-content: flex-start;
+}
+
+footer > .play .meta p {
+  margin: 0;
+  display: inline-block;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+footer > .play .control {
+  
+}

@@ -1,0 +1,103 @@
+@font-face {
+  font-family: 'UbuntuLight';
+  src: url('../assets/fonts/ubuntulight.ttf') format('truetype');
+}
+
+::-moz-selection {
+    color: white;
+    background: green;
+}
+
+::selection {
+    color: white;
+    background: green;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: repeating-linear-gradient(
+    60deg,
+    #ffffff,
+    #fefefe 2px,
+    #fcfcfc 2px,
+    #efefef 5px
+  );
+  font-family: UbuntuLight, UbuntuRegular, helvetica, Tahoma, Verdana, Arial, sans-serif, serif;
+}
+
+a {
+  font-family: UbuntuLight, UbuntuRegular, helvetica, Tahoma, Verdana, Arial, sans-serif, serif;
+  text-decoration: none;
+  color: darkcyan;
+}
+
+a:hover {
+  color: grey;
+  cursor: pointer;
+}
+
+h2 {
+  height: 40px;
+	margin: 10px;
+	text-align: right;
+	color: gray;
+	font-size: 35px;
+	line-height: 40px;
+	font-weight: lighter;
+	font-family: UbuntuLight, helvetica, Tahoma, Verdana, Arial, sans-serif, serif;
+}
+
+h3 {
+  height: 25px;
+	margin: 5px;
+  font-size: 24px;
+ 	font-weight: lighter;
+  font-family: UbuntuLight, helvetica, Tahoma, Verdana, Arial, sans-serif, serif;
+}
+
+hr {
+	width: 100%;
+	margin: 5px;
+}
+
+ul li {
+  list-style-type: none;
+  display: inline-block;
+}
+
+ul li a {
+  font-family: UbuntuLight, helvetica, Tahoma, Verdana, Arial, sans-serif, serif;
+  font-weight: lighter;
+  margin: auto 5px;
+}
+
+.loader {
+    border: 5px solid grey;
+    border-radius: 36%;
+    width: 35px;
+    height: 35px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: pulsate 1s ease-out;
+    animation-iteration-count: infinite;
+}
+
+@keyframes pulsate {
+    0% {
+      transform: scale(.1);
+      opacity: 0.0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 0;
+    }
+}

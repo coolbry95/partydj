@@ -11,14 +11,14 @@
     <div id="searchbar" style="height: 10%">
         <!--TODO: Make it so the search resuls appear instantly-->
         <form action="">
-            Search Song: <input type="text" name="song_to_search_for">
+            Search Song: <input type="text" name="song_to_search_for"> <button id="add_song_to_pool">+</button>
         </form>
     </div>
 
     <div id="song_list_div" style="height: 80%;">
-        <!--TODO: Populate list using the pool json response-->
+        <!--TODO: Populate list using the pool json response, sort by priority-->
         <ol>
-            <li>DJ</li>
+            <li>DJ</li> <button id="upvote">^</button> <button id="downvote">\/</button>
         </ol>
     </div>
 
