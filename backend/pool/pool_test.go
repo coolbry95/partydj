@@ -7,8 +7,8 @@ import (
 	"fmt"
 )
 
-func Setuppool() *pool {
-	pool := &pool{
+func Setuppool() *Pool {
+	pool := &Pool{
 		SongHeap: []*Song{
 			&Song{Priority:1, ID:spotify.ID("1")},
 			&Song{Priority:2, ID:spotify.ID("2")},
