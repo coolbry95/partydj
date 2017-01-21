@@ -1,10 +1,12 @@
-package main
+package Pool
 
 import (
-	"fmt"
+	//"fmt"
 	"time"
 
+	"container/heap"
 	"github.com/zmb3/spotify"
+	"fmt"
 )
 
 type Pool struct {
@@ -23,8 +25,8 @@ type Song struct {
 	TimeAdded time.Time
 }
 
-func (s *Song) getScore() int {
-	return s.Upvotes - s.Downvotes
+func (s *Song) String() string {
+	return s.ID.String() + ", Priority: " + fmt.Sprintf("%d", s.Priority)
 }
 
 func (p *Pool) Len() int { return len(p.SongHeap) }
@@ -53,4 +55,10 @@ func (p *Pool) Pop() interface{} {
 	item.index = -1 // for safety
 	p.SongHeap = old[:n-1]
 	return item
+}
+
+// update modifies the priority and value of an Item in the queue.
+func (pq *Pool) update(item *Song, priority int) {
+	item.Priority = priority
+	heap.Fix(pq, item.index)
 }
