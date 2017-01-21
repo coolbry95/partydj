@@ -143,8 +143,6 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
-	//fmt.Fprintf(w, "Login Completed!")
-	//ch <- &client
 	ch <- client
 	http.Redirect(w, r, "/newpool", 301)
 }
