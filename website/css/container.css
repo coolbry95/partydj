@@ -19,18 +19,14 @@
 }
 
 .container > .splash .input,
-.container > .search input {
+.container > .search .input {
   width: 69%;
 }
 
 .container > .splash .button,
-.container > .search button {
+.container > .search .button {
   width: 25%;
   min-width: 50px;
-}
-
-.container > .search .result {
-  
 }
 
 .container > .main {
@@ -95,7 +91,7 @@
 
 .container > .main > .list li .control {
   margin: 0;
-  width: 50px;
+  width: 52px;
   float: right;
   display: flex;
   flex-flow: row wrap;
@@ -104,12 +100,13 @@
 }
 
 .container > .main > .list li .control .count {
-  width: 30px;
+  padding: 1px;
+  width: 28px;
 }
 
 .container > .main > .list li .control .vote {
   margin: -1px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
 }
