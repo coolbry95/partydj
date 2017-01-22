@@ -13,11 +13,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"strconv"
+
+	"github.com/coolbry95/partydj/backend/pool"
 	"github.com/pressly/chi"
 	"github.com/zmb3/spotify"
-	"github.com/coolbry95/partydj/backend/pool"
-	"strconv"
 )
 
 // redirectURI is the OAuth redirect URI for the application.
@@ -147,7 +149,6 @@ func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 
-
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -170,7 +171,6 @@ func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
-
 
 func (d *DI) createPool(w http.ResponseWriter, r *http.Request) {
 }
@@ -196,7 +196,11 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO: only call this function only after the the current song finishes
-	//d.pool.AddNextSong(&d.client)
+	timerr := time.NewTimer(10 * time.Second)
+	go func() {
+		<-timerr.C
+		d.pool.AddNextSong(&d.client)
+	}()
 
 	json.NewEncoder(w).Encode(d.pool)
 	return
@@ -216,6 +220,6 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
-	ch <- client	
+	ch <- client
 	http.Redirect(w, r, "/getpool", 301)
 }
