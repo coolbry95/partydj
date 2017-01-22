@@ -17,6 +17,7 @@ import (
 	"github.com/pressly/chi"
 	"github.com/zmb3/spotify"
 	"github.com/coolbry95/partydj/backend/pool"
+	"strconv"
 )
 
 // redirectURI is the OAuth redirect URI for the application.
@@ -36,11 +37,15 @@ type DI struct {
 	pool   pool.Pool
 }
 
-func main() {
+var PoolShortIDToLongID map[int]string
+var UserIDToPoolID map[string]string
 
+func main() {
+	// Initialize the pool (single for demonstration)
 	var d *DI
 	d = new(DI)
 
+	// setup the router and paths
 	r := chi.NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.URL.String())
@@ -51,7 +56,9 @@ func main() {
 	r.Post("/add_song/:poolID/:songID", d.addSong)
 	r.Post("/upvote/:poolID/:songID", d.upVote)
 	r.Post("/downvote/:poolID/:songID", d.downVote)
+	r.Post("/join_pool", d.joinPool)
 
+	// Authenticate the users spotify account
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
@@ -59,8 +66,15 @@ func main() {
 
 	// wait for auth to complete
 	d.client = <-ch
+	d.pool.PlaylistID = spotify.ID("0nXlYUH7zBAzubO9Yub4rR") // change to spartahack playlist
 
-	d.pool.PlaylistID = spotify.ID("0nXlYUH7zBAzubO9Yub4rR")
+	// Initialize the short id to long id map
+	PoolShortIDToLongID = make(map[int]string)
+	// hard code the one join digit for this sample pool to 121
+	PoolShortIDToLongID[121] = "0nXlYUH7zBAzubO9Yub4rR"
+
+	// initialize the user map
+	UserIDToPoolID = make(map[string]string)
 
 	userID, err := d.client.CurrentUser()
 	if err != nil {
@@ -71,7 +85,39 @@ func main() {
 
 	block := make(chan struct{})
 	<-block
+}
 
+func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
+	userIDNumber := r.PostFormValue("userId")
+	poolIDNumberStr := r.PostFormValue("poolShortId")
+
+	// Both must be present
+	if len(userIDNumber) == 0 || len(poolIDNumberStr) == 0 {
+		w.WriteHeader(http.StatusPartialContent)
+		fmt.Println("One of the parameters were empty: ", "userId:",
+			userIDNumber, "poolShortId:", poolIDNumberStr)
+		return
+	}
+
+	poolIDNumber, convErr := strconv.Atoi(poolIDNumberStr)
+
+	// Make sure the poolIDNumber is a valid integer, otherwise
+	// respond with Status partial content
+	if convErr != nil {
+		w.WriteHeader(http.StatusPartialContent)
+		fmt.Println("Conversion error: ", convErr)
+		return
+	}
+
+	// Check if pool exists, if not respond with status not found
+	if _, ok := PoolShortIDToLongID[poolIDNumber]; ok != true {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	UserIDToPoolID[userIDNumber] = poolIDNumberStr
+	// Let the user know the request was accepted
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +126,6 @@ func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
 
 	s := &pool.Song{ID: spotify.ID(songID)}
 	heap.Push(&d.pool, s)
-
 }
 
 func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
@@ -112,6 +157,8 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	// TODO: instead of using existing playlist we require a new playlist to be created
 	// playlist, err := d.client.CreatePlaylistForUser(userid.ID, playlistName, true)
 	playlist, err := d.client.GetPlaylistTracks(userid.ID, "0nXlYUH7zBAzubO9Yub4rR")
+	//spartahackPlaylistName := "Sparthack Sample Playlist!"
+	//newPlaylist, err := d.client.CreatePlaylistForUser(userid.ID, spartahackPlaylistName, true)
 	if err != nil {
 		log.Println(err)
 	}
@@ -148,6 +195,6 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
-	ch <- client
+	ch <- client	
 	http.Redirect(w, r, "/getpool", 301)
 }
