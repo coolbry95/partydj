@@ -2,12 +2,20 @@ var BaseURL = "https://linode.shellcode.in/"
 var DatasetURL = document.baseURI.substring(0, document.baseURI.lastIndexOf("/") + 1) + "assets/";
 
 function LoadList(dataset, idName, callback, attribute){
+  _.orderBy(dataset, ["upvotes", "downvotes"], ["desc", "asc"]);
   var idName = idName === undefined ? "list" : idName;
-  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' onclick='VoteAction(this, false)' /><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' onclick='VoteAction(this, true)' /></div></li>";
+  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' onclick='VoteAction(this, true)' /><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' onclick='VoteAction(this, false)' /></div></li>";
   
   document.getElementById(idName).innerHTML = "";
   
-  for (var i = 0; i < dataset.length; ++i){
+  if (dataset[0] !== undefined && dataset[0] !== null && dataset != ""){
+    $("#track").html(dataset[0]["name"] + " - " + dataset[0]["albumname"]);
+    $("#artist").html(dataset[0]["artists"][0]["name"]);
+    $("#cover").attr({"alt": dataset[0]["name"], "src": dataset[0]["images"][2]["url"]});
+    $("#count").html(dataset[0]["upvotes"] + " UP");
+  }
+  
+  for (var i = 1; i < dataset.length; ++i){
     var itemTemp = template;
     var itemID = dataset[i]["ID"];
     var itemUpvote = dataset[i]["upvotes"];
@@ -86,6 +94,7 @@ function Finalize(dataset, attribute){
   Initialize();
   if (dataset === undefined || dataset === null || dataset === ""){
     var queryResult = LoadJSON(BaseURL + "getpool", {}, "GET", "dataset", Initialize, {});
+    //var queryResult = LoadJSON(DatasetURL + "dataset.json", {}, "GET", "dataset", Initialize, {});
   }
 }
 
@@ -94,8 +103,7 @@ function JoinPool(){
   if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
     localStorage.setItem("poolid", inputPoolID);
     var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {});
-    // var queryResult = LoadJSON(DatasetURL + "dataset.json", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "dataset", Initialize, {});
-    //console.log(queryResult);
+    //var queryResult = LoadJSON(DatasetURL + "dataset.json", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "temp", Initialize, {});
   }
 }
 
@@ -106,8 +114,8 @@ function QuitPool(){
 }
 
 function VoteAction(elem, upvote){
-  console.log(elem.getAttribute("data-track"));
-  var queryResult = LoadJSON(BaseURL + upvote ? "upvote" : "downvote", {"songId": elem.getAttribute("data-track"), "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {});
+  console.log(BaseURL + (upvote ? "upvote" : "downvote"));
+  var queryResult = LoadJSON(BaseURL + (upvote ? "upvote" : "downvote"), {"songId": elem.getAttribute("data-track"), "userId": localStorage.getItem("uuid")}, "POST", "temp", Initialize, {});
 }
 
 Initialize();
