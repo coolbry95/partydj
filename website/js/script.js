@@ -7,6 +7,7 @@ function LoadJSON(queryURL, queryParam, queryMethod, storageKey, callback, attri
   var storageKey = storageKey === undefined ? "temp" : storageKey;
   
   httpRequest.open(queryMethod, queryURL + (queryMethod === "GET" ? "?" + $.param(queryParam) : "") , true);
+  //httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
   httpRequest.onload = function(e){
     if (httpRequest.readyState === 4 && httpRequest.status === 200){
       localStorage.setItem(storageKey, httpRequest.responseText);
@@ -36,26 +37,28 @@ function Initialize(dataset, attribute){
     $("#quit, #container, #play").removeClass("inactive");
     
     var localDataset = localStorage.getItem("dataset");
-    if (localDataset !== null && localDataset !== ""){
+    if ((dataset === undefined || dataset === null || dataset === "") 
+      && localDataset !== null && localDataset !== ""){
       LoadList(JSON.parse(localDataset)["songheap"]);
     }
   }
   
-
+  if (dataset !== undefined && dataset !== null && dataset !== ""){
+    LoadList(dataset["songheap"]);
+  }
 }
 
 function Finalize(dataset, attribute){
   Initialize();
 }
 
-var testURL = 'http://localhost/partydj/website/assets/dataset.json';
-
 function JoinPool(){
-  var queryResult = {};
+  
   var inputPoolID = document.getElementById("poolid").value;
   if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
     localStorage.setItem("poolid", inputPoolID);
-    queryResult = LoadJSON(testURL, {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "dataset", [Initialize, {});
+    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Initialize, {});
+    console.log(queryResult);
   }
 }
 
@@ -92,12 +95,3 @@ Initialize();
 
 $("#quit").click(QuitPool);
 $("#quit").singletap(QuitPool);
-
-
-
-{
-  // var playlistid = dataset["playlistid"] === undefined ? "" : dataset["playlistid"];
-  // var userid = dataset["userid"] === undefined ? "" : dataset["userid"];
-  // localStorage.setItem("playlistid", playlistid);
-  // localStorage.setItem("userid", userid);
-}
