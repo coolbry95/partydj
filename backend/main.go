@@ -14,9 +14,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/coolbry95/partydj/backend/pool"
 	"github.com/pressly/chi"
 	"github.com/zmb3/spotify"
+	"github.com/coolbry95/partydj/backend/pool"
 )
 
 // redirectURI is the OAuth redirect URI for the application.
@@ -25,7 +25,8 @@ import (
 const redirectURI = "https://linode.shellcode.in/callback"
 
 var (
-	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate)
+	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
+	spotify.ScopePlaylistModifyPublic)
 	ch    = make(chan spotify.Client)
 	state = "stateless"
 )
@@ -85,11 +86,9 @@ func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
 func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
 	// TODO check for user ID to see if they already voted
 	songID := chi.URLParam(r, "songID")
-	//poolID := chi.URLParam(r, "poolID")
 
 	d.pool.UpVote(spotify.ID(songID))
-
-	// update playlist
+	d.pool.UpdateSpotifyPlaylist(&d.client, d.pool.PlaylistID)
 }
 
 func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
@@ -98,9 +97,7 @@ func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
 	//poolID := chi.URLParam(r, "poolID")
 
 	d.pool.DownVote(spotify.ID(songID))
-
-	// update playlist
-
+	d.pool.UpdateSpotifyPlaylist(&d.client, d.pool.PlaylistID)
 }
 
 func (d *DI) createPool(w http.ResponseWriter, r *http.Request) {
@@ -120,8 +117,16 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	d.pool.SongHeap = make([]*pool.Song, 0, 2)
-	for _, track := range playlist.Tracks {
-		s := &pool.Song{ID: track.Track.ID}
+	for i, track := range playlist.Tracks {
+		s := &pool.Song{
+			ID:       track.Track.ID,
+			Name:     track.Track.Name,
+			Duration: track.Track.Duration,
+			Album:    track.Track.Album.Name,
+			Images:   track.Track.Album.Images,
+			Artists:  track.Track.Artists,
+			Priority: i,
+		}
 		d.pool.SongHeap = append(d.pool.SongHeap, s)
 	}
 
@@ -144,5 +149,5 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
 	ch <- client
-	http.Redirect(w, r, "/newpool", 301)
+	http.Redirect(w, r, "/getpool", 301)
 }

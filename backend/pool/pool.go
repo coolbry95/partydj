@@ -1,27 +1,34 @@
 package pool
 
 import (
-	"time"
 	"container/heap"
 	"fmt"
+	"time"
 
 	"github.com/zmb3/spotify"
 )
 
 type Pool struct {
-	PlaylistID spotify.ID `json:playlistid`
-	UserID     string     `json:userid`
+	PlaylistID spotify.ID `json:"playlistid"`
+	UserID     string     `json:"userid"`
 	// TimeStarted
-	SongHeap []*Song `json:songheap`
+	SongHeap []*Song `json:"songheap"`
 }
 
 type Song struct {
 	ID        spotify.ID
-	Upvotes   int       `json:upvotes`
-	Downvotes int       `json:downvotes`
-	Priority  int       `json:priority`
-	index     int       `json:index` // index into the priorty queue
-	TimeAdded time.Time `json:timeadded`
+	Upvotes   int       `json:"upvotes"`
+	Downvotes int       `json:"downvotes"`
+	Priority  int       `json:"priority"`
+	index     int       `json:"index"` // index into the priorty queue
+	TimeAdded time.Time `json:"timeadded"`
+
+	// meta
+	Album    string                 `json:"albumname"`
+	Images    []spotify.Image        `json:"images"`
+	Artists  []spotify.SimpleArtist `json:"artists"`
+	Duration int                    `json"duration"`
+	Name     string                 `json:"name"`
 }
 
 func (s *Song) String() string {
@@ -44,7 +51,7 @@ func (p *Pool) DownVote(id spotify.ID) {
 		song.Priority--
 		p.update(song, song.Priority)
 	} else {
-		fmt.Println("(UpVote) DID NOT FIND SONG")
+		fmt.Println("(DownVote) DID NOT FIND SONG")
 	}
 }
 
@@ -62,6 +69,10 @@ func (p *Pool) Len() int { return len(p.SongHeap) }
 
 func (p *Pool) Less(i, j int) bool {
 	return p.SongHeap[i].Priority > p.SongHeap[j].Priority
+}
+
+func (s *Song) Less(s1 Song) bool {
+	return s.Priority < s1.Priority
 }
 
 func (p *Pool) Swap(i, j int) {
@@ -93,4 +104,43 @@ func (pq *Pool) update(item *Song, priority int) {
 	item.Priority = priority
 	heap.Fix(pq, item.index)
 	//fmt.Println("(update) Updated priority of " + item.ID.String(), item.Priority)
+}
+
+func (p *Pool) copyPool() *Pool {
+	ps := &Pool{
+		PlaylistID: p.PlaylistID,
+		UserID:     p.UserID,
+		SongHeap:   make([]*Song, len(p.SongHeap)),
+	}
+	copy(ps.SongHeap, p.SongHeap)
+	return ps
+}
+
+func (p *Pool) getSecondSong() *Song {
+	poolCopy := p.copyPool()
+
+	heap.Pop(poolCopy)
+	song := heap.Pop(poolCopy)
+	return song.(*Song)
+}
+
+func (p *Pool) UpdateSpotifyPlaylist(c *spotify.Client, playlistId spotify.ID) {
+	playlist, err := c.GetPlaylistTracks(p.UserID, playlistId)
+
+	if err != nil {
+		fmt.Println("ERROR: (UpdateSpotifyPlaylist) ", err.Error())
+	}
+
+	trackToRemoveId := playlist.Tracks[1].Track.ID
+	trackToAddId := p.getSecondSong().ID
+
+	//fmt.Println("To Remove: ", trackToRemoveId)
+	//fmt.Println("To Add: ", trackToAddId)
+	if trackToAddId != trackToRemoveId {
+		//fmt.Println("(UpdateSpotifyPlaylist) Next song is not the correct one!")
+		newPlayListId, _ := c.RemoveTracksFromPlaylist(p.UserID, playlistId, trackToRemoveId)
+		newPlayListId, _ = c.AddTracksToPlaylist(p.UserID, spotify.ID(newPlayListId), trackToAddId)
+	} else {
+		//fmt.Println("(UpdateSpotifyPlaylist) Next song is correct!!")
+	}
 }

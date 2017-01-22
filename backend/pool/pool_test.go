@@ -73,4 +73,8 @@ func TestPool_FindSong(t *testing.T) {
 	if found := samplePool.FindSong(spotify.ID("3")); found.ID != targetSongID {
 		t.Errorf("expected %s, got %s", targetSongID, found.ID)
 	}
+
+	if found := samplePool.FindSong(spotify.ID("10000")); found != nil {
+		t.Errorf("Fnding a missing song should return nil")
+	}
 }
