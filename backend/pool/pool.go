@@ -38,47 +38,38 @@ func (s *Song) String() string {
 }
 
 func (p *Pool) UpVote(id spotify.ID, userID string) {
-	song := p.FindSong(id)
-	if song != nil {
-		song.Upvotes++
-		song.Priority++
-		p.update(song, song.Priority)
-	} else {
-		fmt.Println("(UpVote) DID NOT FIND SONG")
-	}
-	p.UserToVoteMap[userID] = append(p.UserToVoteMap[userID], song.ID.String())
-}
-
-func (p *Pool) DownVote(id spotify.ID, userID string) {
-	song := p.FindSong(id)
-	if song != nil {
-		song.Downvotes++
-		song.Priority--
-		p.update(song, song.Priority)
-	} else {
-		fmt.Println("(DownVote) DID NOT FIND SONG")
-	}
-	p.UserToVoteMap[userID] = append(p.UserToVoteMap[userID], song.ID.String())
-}
-
-func (p *Pool) FindSong(id spotify.ID) *Song {
 	for i := range p.SongHeap {
 		if p.SongHeap[i].ID == id {
 			//fmt.Printf("(UpVote) Updated priority of %s is %d\n", v.ID, v.Priority)
-			return p.SongHeap[i]
+			p.SongHeap[i].Upvotes++
+			p.SongHeap[i].Priority++
+			p.update(p.SongHeap[i], p.SongHeap[i].Priority)
+			p.UserToVoteMap[userID] = append(p.UserToVoteMap[userID], p.SongHeap[i].ID.String())
+			return
 		}
 	}
-	return nil
+	fmt.Println("(UpVote) DID NOT FIND SONG")
+}
+
+func (p *Pool) DownVote(id spotify.ID, userID string) {
+	//song := p.FindSong(id)
+	for i := range p.SongHeap {
+		if p.SongHeap[i].ID == id {
+			//fmt.Printf("(UpVote) Updated priority of %s is %d\n", v.ID, v.Priority)
+			p.SongHeap[i].Downvotes++
+			p.SongHeap[i].Priority--
+			p.update(p.SongHeap[i], p.SongHeap[i].Priority)
+			p.UserToVoteMap[userID] = append(p.UserToVoteMap[userID], p.SongHeap[i].ID.String())
+			return
+		}
+	}
+	fmt.Println("(DownVote) DID NOT FIND SONG")
 }
 
 func (p *Pool) Len() int { return len(p.SongHeap) }
 
 func (p *Pool) Less(i, j int) bool {
 	return p.SongHeap[i].Priority > p.SongHeap[j].Priority
-}
-
-func (s *Song) Less(s1 Song) bool {
-	return s.Priority < s1.Priority
 }
 
 func (p *Pool) Swap(i, j int) {
