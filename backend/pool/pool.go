@@ -10,6 +10,7 @@ import (
 
 type Pool struct {
 	PlaylistID spotify.ID `json:"playlistid"`
+	PlaylistName string `'json:"playlist_name`
 	UserID     string     `json:"userid"`
 	// TimeStarted
 	SongHeap []*Song `json:"songheap"`
@@ -124,8 +125,10 @@ func (p *Pool) copyPool() *Pool {
 func (p *Pool) getSecondSong() *Song {
 	poolCopy := p.copyPool()
 
-	heap.Pop(poolCopy)
+	firstSong := heap.Pop(poolCopy)
 	song := heap.Pop(poolCopy)
+	heap.Push(p, firstSong)
+	heap.Push(p, song)
 	return song.(*Song)
 }
 
