@@ -93,7 +93,7 @@ function JoinPool(){
   var inputPoolID = document.getElementById("poolid").value;
   if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
     localStorage.setItem("poolid", inputPoolID);
-    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Finalize, {});
+    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {});
     // var queryResult = LoadJSON(DatasetURL + "dataset.json", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "dataset", Initialize, {});
     //console.log(queryResult);
   }
@@ -107,8 +107,7 @@ function QuitPool(){
 
 function VoteAction(elem, upvote){
   console.log(elem.getAttribute("data-track"));
-  console.log(upvote);
-  //var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Finalize, {});
+  var queryResult = LoadJSON(BaseURL + upvote ? "upvote" : "downvote", {"songId": elem.getAttribute("data-track"), "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {});
 }
 
 Initialize();
