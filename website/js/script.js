@@ -1,6 +1,29 @@
 var BaseURL = "https://linode.shellcode.in/"
 var DatasetURL = document.baseURI.substring(0, document.baseURI.lastIndexOf("/") + 1) + "assets/";
 
+function LoadList(dataset, idName, callback, attribute){
+  var idName = idName === undefined ? "list" : idName;
+  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' onclick='VoteAction(this, false)' /><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' onclick='VoteAction(this, true)' /></div></li>";
+  
+  document.getElementById(idName).innerHTML = "";
+  
+  for (var i = 0; i < dataset.length; ++i){
+    var itemTemp = template;
+    var itemID = dataset[i]["ID"];
+    var itemUpvote = dataset[i]["upvotes"];
+    var itemDownvote = dataset[i]["downvotes"];
+    var itemCover = dataset[i]["images"][2]["url"];
+    var itemTrack = dataset[i]["name"];
+    var itemAlbum = dataset[i]["albumname"];
+    var itemArtists = dataset[i]["artists"];
+    var itemDuration = dataset[i]["Duration"]
+    
+    itemTemp = itemTemp.replace(/TRACKID/g, itemID).replace(/UPVOTES/g, itemUpvote).replace(/DOWNVOTES/g, itemDownvote).replace(/COVER/g, itemCover).replace(/TRACK/g, itemTrack).replace(/ALBUM/g, itemAlbum).replace(/ARTIST/g, itemArtists[0]["name"]);
+    
+    document.getElementById(idName).innerHTML += itemTemp;
+  }
+}
+
 function LoadJSON(queryURL, queryParam, queryMethod, storageKey, callback, attribute){
   var httpRequest = new XMLHttpRequest();
   var queryMethod = queryMethod === undefined ? "GET" : queryMethod;
@@ -12,13 +35,23 @@ function LoadJSON(queryURL, queryParam, queryMethod, storageKey, callback, attri
     if (httpRequest.readyState === 4 && httpRequest.status === 200){
       localStorage.setItem(storageKey, httpRequest.responseText);
       if (callback !== undefined && callback !== null)
-        callback(JSON.parse(httpRequest.responseText), attribute);
+        callback(httpRequest.responseText === "" ? undefined : JSON.parse(httpRequest.responseText), attribute);
     }
-      
     else
       console.error(httpRequest.statusText);
   }
-  if (!queryURL.includes("file:///")) httpRequest.send(queryMethod === "GET" ? null : $.param(queryParam));
+  // if (!queryURL.includes("file:///")) httpRequest.send(queryMethod === "GET" ? null : $.param(queryParam));
+  if (!queryURL.includes("file:///"))
+    if (queryMethod === "GET") httpRequest.send(null);
+    else {
+      var formData = new FormData();
+      for (var key in queryParam) formData.append(key, queryParam[key]);
+      httpRequest.send(formData);
+    }
+}
+
+function VoteAction(el){
+  console.log(el.getAttribute("track"));
 }
 
 function Initialize(dataset, attribute){
@@ -46,19 +79,23 @@ function Initialize(dataset, attribute){
   if (dataset !== undefined && dataset !== null && dataset !== ""){
     LoadList(dataset["songheap"]);
   }
+
 }
 
 function Finalize(dataset, attribute){
   Initialize();
+  if (dataset === undefined || dataset === null || dataset === ""){
+    var queryResult = LoadJSON(BaseURL + "getpool", {}, "GET", "dataset", Initialize, {});
+  }
 }
 
 function JoinPool(){
-  
   var inputPoolID = document.getElementById("poolid").value;
   if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
     localStorage.setItem("poolid", inputPoolID);
-    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Initialize, {});
-    console.log(queryResult);
+    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Finalize, {});
+    // var queryResult = LoadJSON(DatasetURL + "dataset.json", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "dataset", Initialize, {});
+    //console.log(queryResult);
   }
 }
 
@@ -68,27 +105,10 @@ function QuitPool(){
   window.location.reload(true);
 }
 
-function LoadList(dataset, idName, callback, attribute){
-  var idName = idName === undefined ? "list" : idName;
-  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' /><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' /></div></li>";
-  
-  document.getElementById(idName).innerHTML = "";
-  
-  for (var i = 0; i < dataset.length; ++i){
-    var itemTemp = template;
-    var itemID = dataset[i]["ID"];
-    var itemUpvote = dataset[i]["upvotes"];
-    var itemDownvote = dataset[i]["downvotes"];
-    var itemCover = dataset[i]["images"][2]["url"];
-    var itemTrack = dataset[i]["name"];
-    var itemAlbum = dataset[i]["albumname"];
-    var itemArtists = dataset[i]["artists"];
-    var itemDuration = dataset[i]["Duration"]
-    
-    itemTemp = itemTemp.replace(/TRACKID/g, itemID).replace(/UPVOTES/g, itemUpvote).replace(/DOWNVOTES/g, itemDownvote).replace(/COVER/g, itemCover).replace(/TRACK/g, itemTrack).replace(/ALBUM/g, itemAlbum).replace(/ARTIST/g, itemArtists[0]["name"]);
-    
-    document.getElementById(idName).innerHTML += itemTemp;
-  }
+function VoteAction(elem, upvote){
+  console.log(elem.getAttribute("data-track"));
+  console.log(upvote);
+  //var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Finalize, {});
 }
 
 Initialize();
