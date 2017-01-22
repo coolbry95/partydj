@@ -26,6 +26,7 @@
 .container > .splash button,
 .container > .search button {
   width: 25%;
+  min-width: 50px;
 }
 
 .container > .search .result {
@@ -47,7 +48,7 @@
 }
 
 .container > .main > .list li {
-  height: 35px;
+  height: 65px;
   display: flex;
   padding-left: 0;
   flex-flow: row nowrap;
@@ -59,16 +60,29 @@
   background: rgba(200, 200, 200, 0.5);
 }
 
+.container > .main > .list li .cover {
+  width: 60px;
+  height: 60px;
+  margin: 2px;
+  -webkit-box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+  -moz-box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+  box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+}
+
 .container > .main > .list li .meta {
-  width: 86%;
+  width: 64%;
   overflow-x: hidden;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-content: flex-start;
 }
 
 .container > .main > .list li .meta p {
-  margin: 6px;
+  margin: 2px;
   display: inline-block;
-  font-size: 16px;
-  line-height: 20px;
+  font-size: 13px;
+  line-height: 13px;
 }
 
 .container > .main > .list li .meta .name {
@@ -83,12 +97,19 @@
   margin: 0;
   width: 50px;
   float: right;
-  padding: 5px;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-content: center;
+}
+
+.container > .main > .list li .control .count {
+  width: 30px;
 }
 
 .container > .main > .list li .control .vote {
   margin: -1px;
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
 }
