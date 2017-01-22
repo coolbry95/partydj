@@ -216,13 +216,13 @@ func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "songID")
 	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
 
 	// TODO check for user ID to see if they already voted
-	songID := chi.URLParam(r, "songId")
 	userID := r.PostFormValue("userId")
 
-	if len(userID) == 0 || len(songID) == 0 {
+	if len(userID) == 0 {
 		w.WriteHeader(http.StatusPartialContent)
 		return
 	}
@@ -238,14 +238,14 @@ func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "songID")
 	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
 
 	// TODO check for user ID to see if they already voted
-	songID := chi.URLParam(r, "songId")
 	userID := r.PostFormValue("userId")
 	//poolID := chi.URLParam(r, "poolID")
 
-	if len(userID) == 0 || len(songID) == 0 {
+	if len(userID) == 0 {
 		w.WriteHeader(http.StatusPartialContent)
 		return
 	}
