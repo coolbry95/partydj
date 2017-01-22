@@ -58,6 +58,8 @@ func main() {
 	r.Post("/downvote/:poolID/:songID", d.downVote)
 	r.Post("/join_pool", d.joinPool)
 
+	r.FileServer("/files", http.Dir("/home/coolbry95/gosrc/src/github.com/coolbry95/partydj/website"))
+
 	// Authenticate the users spotify account
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
