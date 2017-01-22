@@ -117,7 +117,7 @@ func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
 
 	UserIDToPoolID[userIDNumber] = poolIDNumberStr
 	// Let the user know the request was accepted
-	w.WriteHeader(http.StatusAccepted)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
@@ -131,19 +131,44 @@ func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
 func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
 	// TODO check for user ID to see if they already voted
 	songID := chi.URLParam(r, "songID")
+	userID := r.PostFormValue("userId")
 
-	d.pool.UpVote(spotify.ID(songID))
-	d.pool.UpdateSpotifyPlaylist(&d.client, d.pool.PlaylistID)
+	if len(userID) == 0 || len(songID) == 0 {
+		w.WriteHeader(http.StatusPartialContent)
+		return
+	}
+
+	if !d.pool.HasUserVoted(userID, songID) {
+		d.pool.UpVote(spotify.ID(songID), userID)
+		d.pool.UpdateSpotifyPlaylist(&d.client, d.pool.PlaylistID)
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
 	// TODO check for user ID to see if they already voted
 	songID := chi.URLParam(r, "songID")
+	userID := r.PostFormValue("userId")
 	//poolID := chi.URLParam(r, "poolID")
 
-	d.pool.DownVote(spotify.ID(songID))
-	d.pool.UpdateSpotifyPlaylist(&d.client, d.pool.PlaylistID)
+	if len(userID) == 0 || len(songID) == 0 {
+		w.WriteHeader(http.StatusPartialContent)
+		return
+	}
+
+	if !d.pool.HasUserVoted(userID, songID) {
+		d.pool.DownVote(spotify.ID(songID), userID)
+		d.pool.UpdateSpotifyPlaylist(&d.client, d.pool.PlaylistID)
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
+
 
 func (d *DI) createPool(w http.ResponseWriter, r *http.Request) {
 }
@@ -163,7 +188,7 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	d.pool.SongHeap = make([]*pool.Song, 0, 10)
+	d.pool.SongHeap = make([]*pool.Song, 0, 100)
 	for i, track := range playlist.Tracks {
 		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track.SimpleTrack, i))
 	}
