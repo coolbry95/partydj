@@ -30,9 +30,9 @@
     </header>
     
     <div class='container' id='join' style='background: rgba(10, 10, 10, 0.4);'>
-      <div class='splash'>
-        <span>#</span><input id='poolid' type='text' placeholder='Join Pool' /> <button id='join' onclick='JoinPool()'>Join</button>
-      </div>
+      <form class='splash' enctype='multipart/form-data' onsubmit='JoinPool(this); return false;'>
+        <span>#</span><input class='input' id='poolid' type='text' placeholder='Join Pool' /> <input class='button' id='join' type='submit' value='Join' />
+      </form>
     </div> 
     
     <div class='container inactive' id='container'>

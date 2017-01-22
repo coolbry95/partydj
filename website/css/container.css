@@ -18,12 +18,12 @@
   align-content: flex-start;
 }
 
-.container > .splash input,
+.container > .splash .input,
 .container > .search input {
   width: 69%;
 }
 
-.container > .splash button,
+.container > .splash .button,
 .container > .search button {
   width: 25%;
   min-width: 50px;

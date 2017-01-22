@@ -1,73 +1,9 @@
 var BaseURL = "https://linode.shellcode.in/"
 var DatasetURL = document.baseURI.substring(0, document.baseURI.lastIndexOf("/") + 1) + "assets/";
 
-function LoadJSON(queryURL, queryParam, queryMethod, storageKey, callback, attribute){
-  var httpRequest = new XMLHttpRequest();
-  var queryMethod = queryMethod === undefined ? "GET" : queryMethod;
-  var storageKey = storageKey === undefined ? "temp" : storageKey;
-  
-  httpRequest.open(queryMethod, queryURL + (queryMethod === "GET" ? "?" + $.param(queryParam) : "") , true);
-  httpRequest.onload = function(e){
-    if (httpRequest.readyState === 4 && httpRequest.status === 200){
-      localStorage.setItem(storageKey, httpRequest.responseText);
-      if (callback !== undefined && callback !== null)
-        callback(JSON.parse(httpRequest.responseText), attribute);
-    }
-      
-    else
-      console.error(httpRequest.statusText);
-  }
-  if (!queryURL.includes("file:///")) httpRequest.send(queryMethod === "GET" ? null : $.param(queryParam));
-}
-
-function Initialize(dataset, attribute){
-  var localUUID = localStorage.getItem("uuid");
-  if (localUUID === null || localUUID === ""){
-    identity().get(function(UUID){
-      document.cookie = "uuid=" + UUID + "; max-age=86400;";
-      localStorage.setItem("uuid", UUID);
-    });
-  }
-  
-  var localPoolID = localStorage.getItem("poolid");
-  if (localPoolID !== null && localPoolID !== ""){
-    $("#join").addClass("inactive");
-    $("#pool").html("Pool: " + localPoolID);
-    $("#quit, #container, #play").removeClass("inactive");
-    
-    var localDataset = localStorage.getItem("dataset");
-    if (localDataset !== null && localDataset !== ""){
-      LoadList(JSON.parse(localDataset)["songheap"]);
-    }
-  }
-  
-
-}
-
-function Finalize(dataset, attribute){
-  Initialize();
-}
-
-var testURL = 'http://localhost/partydj/website/assets/dataset.json';
-
-function JoinPool(){
-  var queryResult = {};
-  var inputPoolID = document.getElementById("poolid").value;
-  if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
-    localStorage.setItem("poolid", inputPoolID);
-    queryResult = LoadJSON(testURL, {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "dataset", [Initialize, {});
-  }
-}
-
-function QuitPool(){
-  localStorage.removeItem("poolid");
-  localStorage.removeItem("dataset");
-  window.location.reload(true);
-}
-
 function LoadList(dataset, idName, callback, attribute){
   var idName = idName === undefined ? "list" : idName;
-  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' /><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' /></div></li>";
+  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' onclick='VoteAction(this, false)' /><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' onclick='VoteAction(this, true)' /></div></li>";
   
   document.getElementById(idName).innerHTML = "";
   
@@ -88,16 +24,94 @@ function LoadList(dataset, idName, callback, attribute){
   }
 }
 
+function LoadJSON(queryURL, queryParam, queryMethod, storageKey, callback, attribute){
+  var httpRequest = new XMLHttpRequest();
+  var queryMethod = queryMethod === undefined ? "GET" : queryMethod;
+  var storageKey = storageKey === undefined ? "temp" : storageKey;
+  
+  httpRequest.open(queryMethod, queryURL + (queryMethod === "GET" ? "?" + $.param(queryParam) : "") , true);
+  //httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
+  httpRequest.onload = function(e){
+    if (httpRequest.readyState === 4 && httpRequest.status === 200){
+      localStorage.setItem(storageKey, httpRequest.responseText);
+      if (callback !== undefined && callback !== null)
+        callback(httpRequest.responseText === "" ? undefined : JSON.parse(httpRequest.responseText), attribute);
+    }
+    else
+      console.error(httpRequest.statusText);
+  }
+  // if (!queryURL.includes("file:///")) httpRequest.send(queryMethod === "GET" ? null : $.param(queryParam));
+  if (!queryURL.includes("file:///"))
+    if (queryMethod === "GET") httpRequest.send(null);
+    else {
+      var formData = new FormData();
+      for (var key in queryParam) formData.append(key, queryParam[key]);
+      httpRequest.send(formData);
+    }
+}
+
+function VoteAction(el){
+  console.log(el.getAttribute("track"));
+}
+
+function Initialize(dataset, attribute){
+  var localUUID = localStorage.getItem("uuid");
+  if (localUUID === null || localUUID === ""){
+    identity().get(function(UUID){
+      document.cookie = "uuid=" + UUID + "; max-age=86400;";
+      localStorage.setItem("uuid", UUID);
+    });
+  }
+  
+  var localPoolID = localStorage.getItem("poolid");
+  if (localPoolID !== null && localPoolID !== ""){
+    $("#join").addClass("inactive");
+    $("#pool").html("Pool: " + localPoolID);
+    $("#quit, #container, #play").removeClass("inactive");
+    
+    var localDataset = localStorage.getItem("dataset");
+    if ((dataset === undefined || dataset === null || dataset === "") 
+      && localDataset !== null && localDataset !== ""){
+      LoadList(JSON.parse(localDataset)["songheap"]);
+    }
+  }
+  
+  if (dataset !== undefined && dataset !== null && dataset !== ""){
+    LoadList(dataset["songheap"]);
+  }
+
+}
+
+function Finalize(dataset, attribute){
+  Initialize();
+  if (dataset === undefined || dataset === null || dataset === ""){
+    var queryResult = LoadJSON(BaseURL + "getpool", {}, "GET", "dataset", Initialize, {});
+  }
+}
+
+function JoinPool(){
+  var inputPoolID = document.getElementById("poolid").value;
+  if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
+    localStorage.setItem("poolid", inputPoolID);
+    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Finalize, {});
+    // var queryResult = LoadJSON(DatasetURL + "dataset.json", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "dataset", Initialize, {});
+    //console.log(queryResult);
+  }
+}
+
+function QuitPool(){
+  localStorage.removeItem("poolid");
+  localStorage.removeItem("dataset");
+  window.location.reload(true);
+}
+
+function VoteAction(elem, upvote){
+  console.log(elem.getAttribute("data-track"));
+  console.log(upvote);
+  //var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "dataset", Finalize, {});
+}
+
 Initialize();
 
 $("#quit").click(QuitPool);
 $("#quit").singletap(QuitPool);
-
-
-
-{
-  // var playlistid = dataset["playlistid"] === undefined ? "" : dataset["playlistid"];
-  // var userid = dataset["userid"] === undefined ? "" : dataset["userid"];
-  // localStorage.setItem("playlistid", playlistid);
-  // localStorage.setItem("userid", userid);
-}
