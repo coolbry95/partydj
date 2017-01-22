@@ -25,7 +25,7 @@ type Song struct {
 
 	// meta
 	Album    string                 `json:"albumname"`
-	Images    []spotify.Image        `json:"images"`
+	Images   []spotify.Image        `json:"images"`
 	Artists  []spotify.SimpleArtist `json:"artists"`
 	Duration int                    `json"duration"`
 	Name     string                 `json:"name"`
@@ -142,5 +142,33 @@ func (p *Pool) UpdateSpotifyPlaylist(c *spotify.Client, playlistId spotify.ID) {
 		newPlayListId, _ = c.AddTracksToPlaylist(p.UserID, spotify.ID(newPlayListId), trackToAddId)
 	} else {
 		//fmt.Println("(UpdateSpotifyPlaylist) Next song is correct!!")
+	}
+}
+
+func (p *Pool) AddNextSong(c *spotify.Client) {
+	firstSong := heap.Pop(p)
+	nextSong := heap.Pop(p)
+	toBeNextSong := heap.Pop(p)
+
+	//fmt.Println("first song: ", firstSong,"next song: ", nextSong, "to be next song: ", toBeNextSong)
+	_, err := c.RemoveTracksFromPlaylist(p.UserID, p.PlaylistID, firstSong.(*Song).ID)
+
+	if err != nil {
+		fmt.Println("remove error: ", err)
+	}
+
+	heap.Push(p, toBeNextSong)
+	heap.Push(p, nextSong)
+
+	c.AddTracksToPlaylist(p.UserID, p.PlaylistID, toBeNextSong.(*Song).ID)
+}
+
+func TrackToSong(track *spotify.SimpleTrack, priority int) *Song {
+	return &Song{
+		ID:       track.ID,
+		Name:     track.Name,
+		Duration: track.Duration,
+		Artists:  track.Artists,
+		Priority: priority,
 	}
 }
