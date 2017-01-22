@@ -2,9 +2,10 @@ var BaseURL = "https://linode.shellcode.in/"
 var DatasetURL = document.baseURI.substring(0, document.baseURI.lastIndexOf("/") + 1) + "assets/";
 
 function LoadList(dataset, idName, callback, attribute){
-  _.orderBy(dataset, ["upvotes", "downvotes"], ["desc", "asc"]);
+  dataset = _.orderBy(dataset, ["priority"], ["desc"]);
+  dataset = _.uniqBy(dataset, "ID");
   var idName = idName === undefined ? "list" : idName;
-  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><div class='control'><span class='count'>UPVOTES</span><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' onclick='VoteAction(this, true)' /><span class='count'>DOWNVOTES</span><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' onclick='VoteAction(this, false)' /></div></li>";
+  var template = "<li><img class='cover' src='COVER' alt='TRACK'/><div class='meta'><p class='track'>TRACK - ALBUM</p><p class='artist'>ARTIST</p></div><span class='priority'>PRIORITY</span><div class='control'><img class='vote upvote' src='./assets/upvote.svg' alt='Upvote' data-track='TRACKID' onclick='VoteAction(this, true)' /><img class='vote downvote' src='./assets/downvote.svg' alt='Downvote' data-track='TRACKID' onclick='VoteAction(this, false)' /></div></li>";
   
   document.getElementById(idName).innerHTML = "";
   
@@ -18,15 +19,16 @@ function LoadList(dataset, idName, callback, attribute){
   for (var i = 1; i < dataset.length; ++i){
     var itemTemp = template;
     var itemID = dataset[i]["ID"];
-    var itemUpvote = dataset[i]["upvotes"];
-    var itemDownvote = dataset[i]["downvotes"];
+    // var itemUpvote = dataset[i]["upvotes"];
+    // var itemDownvote = dataset[i]["downvotes"];
+    var itemPriority = dataset[i]["priority"];
     var itemCover = dataset[i]["images"][2]["url"];
     var itemTrack = dataset[i]["name"];
     var itemAlbum = dataset[i]["albumname"];
     var itemArtists = dataset[i]["artists"];
     var itemDuration = dataset[i]["Duration"]
     
-    itemTemp = itemTemp.replace(/TRACKID/g, itemID).replace(/UPVOTES/g, itemUpvote).replace(/DOWNVOTES/g, itemDownvote).replace(/COVER/g, itemCover).replace(/TRACK/g, itemTrack).replace(/ALBUM/g, itemAlbum).replace(/ARTIST/g, itemArtists[0]["name"]);
+    itemTemp = itemTemp.replace(/TRACKID/g, itemID).replace(/PRIORITY/g, itemPriority).replace(/COVER/g, itemCover).replace(/TRACK/g, itemTrack).replace(/ALBUM/g, itemAlbum).replace(/ARTIST/g, itemArtists[0]["name"]);
     
     document.getElementById(idName).innerHTML += itemTemp;
   }
