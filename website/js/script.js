@@ -92,7 +92,7 @@ function Initialize(dataset, attribute){
 
 function Finalize(dataset, attribute){
   Initialize();
-  if (dataset === undefined || dataset === null || dataset === ""){
+  if (dataset === undefined || dataset === null || dataset === "" || (attribute["refresh"] !== undefined && attribute["refresh"] !== null && attribute["refresh"] === true)){
     var queryResult = LoadJSON(BaseURL + "getpool", {}, "GET", "dataset", Initialize, {});
     //var queryResult = LoadJSON(DatasetURL + "dataset.json", {}, "GET", "dataset", Initialize, {});
   }
@@ -102,7 +102,7 @@ function JoinPool(){
   var inputPoolID = document.getElementById("poolid").value;
   if (inputPoolID !== undefined && inputPoolID !== null && inputPoolID !== ""){
     localStorage.setItem("poolid", inputPoolID);
-    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {});
+    var queryResult = LoadJSON(BaseURL + "join_pool", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {"refresh": true});
     //var queryResult = LoadJSON(DatasetURL + "dataset.json", {"poolShortId": inputPoolID, "userId": localStorage.getItem("uuid")}, "GET", "temp", Initialize, {});
   }
 }
@@ -115,7 +115,17 @@ function QuitPool(){
 
 function VoteAction(elem, upvote){
   console.log(BaseURL + (upvote ? "upvote" : "downvote"));
-  var queryResult = LoadJSON(BaseURL + (upvote ? "upvote" : "downvote"), {"songId": elem.getAttribute("data-track"), "userId": localStorage.getItem("uuid")}, "POST", "temp", Initialize, {});
+  var queryResult = LoadJSON(BaseURL + (upvote ? "upvote" : "downvote"), {"songId": elem.getAttribute("data-track"), "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {"refresh": true});
+}
+
+function SearchMusic(){
+  var inputKeyword = document.getElementById("keyword").value;
+  if (inputKeyword !== undefined && inputKeyword !== null && inputKeywordv !== ""){
+    $("#result").removeClass("inactive");
+    $("#list").addClass("inactive");
+    var queryResult = LoadJSON(BaseURL + "search_for_songs", {"search_query": inputKeyword, "number_of_results": 10}, "POST", "temp", function(data, attr){ LoadList(data, "result"); }, {});
+    //var queryResult = LoadJSON(DatasetURL + "dataset.json", {}, "GET", "temp", function(data, attr){ console.LoadList(data, "result"); }, {});
+  }
 }
 
 Initialize();

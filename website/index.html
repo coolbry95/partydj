@@ -20,7 +20,7 @@
     <script type='text/javascript' src='./js/identity.js' defer></script>
     <script type='text/javascript' src='./js/script.js' defer></script>
 
-    <title id='title'>SAMPLE PartyDJ Pool</title>
+    <title id='title'>PartyDJ Pool</title>
   </head>
   <body>
     <header>
@@ -36,13 +36,13 @@
     </div> 
     
     <div class='container inactive' id='container'>
-      <div class='search'>
-        <input id='keyword' type='text' placeholder='Search Music' /> <button id='search'>Search</button>
-        <div class='result inactive' id='result'></div>
-      </div>
+      <form class='search' enctype='multipart/form-data' onsubmit='SearchMusic(this); return false;'>
+        <input class='input' id='keyword' type='text' placeholder='Search Music' /> <input class='button' id='search' type='submit' value='Search' />
+      </form>
 
       <div class='main'>
-        
+        <ul id='result' class='list'>
+        </ul>
         <ul id='list' class='list'>
           <li><div class='loader' style='width: 35px; height: 35px;'></div></li>
         </ul>
