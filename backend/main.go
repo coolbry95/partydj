@@ -133,7 +133,8 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println(d.pool)
 	}
 
-	d.pool.AddNextSong(&d.client)
+	//TODO: only call this function only after the the current song finishes
+	//d.pool.AddNextSong(&d.client)
 
 	json.NewEncoder(w).Encode(d.pool)
 	return
