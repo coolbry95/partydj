@@ -92,6 +92,8 @@ func main() {
 }
 
 func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
+
 	userIDNumber := r.PostFormValue("userId")
 	poolIDNumberStr := r.PostFormValue("poolShortId")
 
@@ -194,16 +196,17 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	for i, track := range playlist.Tracks {
 		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track, i))
 	}
+	d.pool.UserToVoteMap = make(map[string][]string)
 
 	//TODO: only call this function only after the the current song finishes
 	song := heap.Pop(&d.pool).(*pool.Song)
 	heap.Push(&d.pool, song)
-	songTime := song.Duration + 15
-	
-	timerr := time.NewTimer(time.Duration(songTime) * time.Second)
+
 	go func() {
-		<-timerr.C
+		songTime := song.Duration + 15
+		time.Sleep(time.Duration(songTime) * time.Second)
 		d.pool.AddNextSong(&d.client)
+		fmt.Println("Now playing new song...")
 	}()
 
 	json.NewEncoder(w).Encode(d.pool)
