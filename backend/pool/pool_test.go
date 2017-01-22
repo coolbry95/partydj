@@ -15,6 +15,7 @@ func SetupPool() *Pool {
 			&Song{Priority: 3, ID: spotify.ID("3")},
 			&Song{Priority: 4, ID: spotify.ID("4")},
 		},
+		UserToVoteMap: make(map[string][]string),
 	}
 
 	heap.Init(pool)
@@ -42,10 +43,10 @@ func TestPool_Pop(t *testing.T) {
 func TestPool_UpVote(t *testing.T) {
 	samplePool := SetupPool()
 	targetSongId := spotify.ID("3")
-
+        targetUserId := "1234"
 	// Avoid the priority being equivalent
-	samplePool.UpVote(targetSongId)
-	samplePool.UpVote(targetSongId)
+	samplePool.UpVote(targetSongId, targetUserId)
+	samplePool.UpVote(targetSongId, targetUserId)
 
 	if popped := heap.Pop(samplePool); popped.(*Song).ID != targetSongId {
 		t.Errorf("expected %s, got %s", targetSongId.String(), popped.(*Song).ID)
@@ -55,11 +56,12 @@ func TestPool_UpVote(t *testing.T) {
 func TestPool_DownVote(t *testing.T) {
 	samplePool := SetupPool()
 	targetSongId := spotify.ID("4")
+	targetUserId := "1234"
 	newLargestSongId := spotify.ID("3")
 
 	// Avoid the priority being equivalent
-	samplePool.DownVote(targetSongId)
-	samplePool.DownVote(targetSongId)
+	samplePool.DownVote(targetSongId, targetUserId)
+	samplePool.DownVote(targetSongId, targetUserId)
 
 	if popped := heap.Pop(samplePool); popped.(*Song).ID != newLargestSongId {
 		t.Errorf("expected %s, got %s", targetSongId.String(), popped.(*Song).ID)
@@ -76,5 +78,34 @@ func TestPool_FindSong(t *testing.T) {
 
 	if found := samplePool.FindSong(spotify.ID("10000")); found != nil {
 		t.Errorf("Fnding a missing song should return nil")
+	}
+}
+
+func TestPool_HasUserVoted(t *testing.T) {
+	samplePool := SetupPool()
+	targetUserID := "1234"
+	targetSongID := spotify.ID("3")
+
+	if voted := samplePool.HasUserVoted(targetUserID, targetSongID.String()); voted{
+		t.Errorf("expected false (user not found), got true")
+	}
+
+	samplePool.UpVote(targetSongID, targetUserID)
+	if voted := samplePool.HasUserVoted(targetUserID, targetSongID.String()); !voted{
+		t.Errorf("expected true (user voted on %s)", targetSongID.String())
+	}
+
+	if voted := samplePool.HasUserVoted(targetUserID, "5678"); voted{
+		t.Errorf("expected false (user did not vote on 5678)")
+	}
+
+	targetSongIDDown := spotify.ID("33")
+	samplePool.DownVote(targetSongID, targetUserID)
+	if voted := samplePool.HasUserVoted(targetUserID, targetSongIDDown.String()); voted{
+		t.Errorf("expected false (user did vote on 33)")
+	}
+
+	if voted := samplePool.HasUserVoted(targetUserID, "34"); voted{
+		t.Errorf("expected false (user did not vote on 34)")
 	}
 }
