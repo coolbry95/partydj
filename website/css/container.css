@@ -3,6 +3,14 @@
   height: 90%;
 }
 
+.container > .splash {
+  width: 50%;
+  margin: auto 25%;
+  position: relative;
+  top: 45%;
+}
+
+.container > .splash,
 .container > .search {
   display: flex;
   flex-flow: row nowrap;
@@ -10,12 +18,18 @@
   align-content: flex-start;
 }
 
+.container > .splash input,
 .container > .search input {
   width: 69%;
 }
 
+.container > .splash button,
 .container > .search button {
   width: 25%;
+}
+
+.container > .search .result {
+  
 }
 
 .container > .main {

@@ -77,6 +77,10 @@ ul li a {
   margin: auto 5px;
 }
 
+.inactive {
+  display: none !important;
+}
+
 .loader {
     border: 5px solid grey;
     border-radius: 36%;
