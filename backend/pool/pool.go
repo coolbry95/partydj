@@ -13,6 +13,7 @@ type Pool struct {
 	UserID     string     `json:"userid"`
 	// TimeStarted
 	SongHeap []*Song `json:"songheap"`
+	UserToVoteMap map[string][]string
 }
 
 type Song struct {
@@ -35,24 +36,28 @@ func (s *Song) String() string {
 	return s.ID.String() + ", Priority: " + fmt.Sprintf("%d", s.Priority)
 }
 
-func (p *Pool) UpVote(id spotify.ID) {
-	if song := p.FindSong(id); song != nil {
+func (p *Pool) UpVote(id spotify.ID, userID string) {
+	song := p.FindSong(id)
+	if song != nil {
 		song.Upvotes++
 		song.Priority++
 		p.update(song, song.Priority)
 	} else {
 		fmt.Println("(UpVote) DID NOT FIND SONG")
 	}
+	p.UserToVoteMap[userID] = append(p.UserToVoteMap[userID], song.ID.String())
 }
 
-func (p *Pool) DownVote(id spotify.ID) {
-	if song := p.FindSong(id); song != nil {
+func (p *Pool) DownVote(id spotify.ID, userID string) {
+	song := p.FindSong(id)
+	if song != nil {
 		song.Downvotes++
 		song.Priority--
 		p.update(song, song.Priority)
 	} else {
 		fmt.Println("(DownVote) DID NOT FIND SONG")
 	}
+	p.UserToVoteMap[userID] = append(p.UserToVoteMap[userID], song.ID.String())
 }
 
 func (p *Pool) FindSong(id spotify.ID) *Song {
@@ -161,6 +166,19 @@ func (p *Pool) AddNextSong(c *spotify.Client) {
 	heap.Push(p, nextSong)
 
 	c.AddTracksToPlaylist(p.UserID, p.PlaylistID, toBeNextSong.(*Song).ID)
+}
+
+func (p *Pool) HasUserVoted(userId string, songID string) bool {
+	_, ok := p.UserToVoteMap[userId]
+	if ok{
+		votedSongs := p.UserToVoteMap[userId]
+		for i := range votedSongs{
+			if votedSongs[i] == songID{
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func TrackToSong(track *spotify.SimpleTrack, priority int) *Song {
