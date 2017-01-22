@@ -1,0 +1,115 @@
+.container {
+  margin: 2% 2%;
+  height: 90%;
+}
+
+.container > .splash {
+  width: 50%;
+  margin: auto 25%;
+  position: relative;
+  top: 45%;
+}
+
+.container > .splash,
+.container > .search {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-content: flex-start;
+}
+
+.container > .splash input,
+.container > .search input {
+  width: 69%;
+}
+
+.container > .splash button,
+.container > .search button {
+  width: 25%;
+  min-width: 50px;
+}
+
+.container > .search .result {
+  
+}
+
+.container > .main {
+  height: 92%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.container > .main > .list {
+  display: flex;
+  padding-left: 0;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  align-content: flex-start;
+}
+
+.container > .main > .list li {
+  height: 65px;
+  display: flex;
+  padding-left: 0;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-content: flex-start;
+}
+
+.container > .main > .list li:nth-of-type(odd) {
+  background: rgba(200, 200, 200, 0.5);
+}
+
+.container > .main > .list li .cover {
+  width: 60px;
+  height: 60px;
+  margin: 2px;
+  -webkit-box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+  -moz-box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+  box-shadow: 2px 2px 5px rgba(50, 50, 50, 0.5);
+}
+
+.container > .main > .list li .meta {
+  width: 64%;
+  overflow-x: hidden;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-content: flex-start;
+}
+
+.container > .main > .list li .meta p {
+  margin: 2px;
+  display: inline-block;
+  font-size: 13px;
+  line-height: 13px;
+}
+
+.container > .main > .list li .meta .name {
+
+}
+
+.container > .main > .list li .meta .artist {
+
+}
+
+.container > .main > .list li .control {
+  margin: 0;
+  width: 50px;
+  float: right;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-content: center;
+}
+
+.container > .main > .list li .control .count {
+  width: 30px;
+}
+
+.container > .main > .list li .control .vote {
+  margin: -1px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
