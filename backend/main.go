@@ -190,7 +190,7 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 
 	d.pool.SongHeap = make([]*pool.Song, 0, 100)
 	for i, track := range playlist.Tracks {
-		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track.SimpleTrack, i))
+		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track, i))
 	}
 
 	//TODO: only call this function only after the the current song finishes

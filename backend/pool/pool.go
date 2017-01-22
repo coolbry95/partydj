@@ -181,12 +181,14 @@ func (p *Pool) HasUserVoted(userId string, songID string) bool {
 	return false
 }
 
-func TrackToSong(track *spotify.SimpleTrack, priority int) *Song {
+func TrackToSong(track *spotify.FullTrack, priority int) *Song {
 	return &Song{
-		ID:       track.ID,
-		Name:     track.Name,
+		ID: track.ID,
+		Name: track.Name,
 		Duration: track.Duration,
-		Artists:  track.Artists,
+		Album: track.Album.Name,
+		Images: track.Album.Images,
+		Artists: track.Artists,
 		Priority: priority,
 	}
 }
