@@ -121,18 +121,6 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track.SimpleTrack, i))
 	}
 
-	tracks, err := d.client.GetTracks("7ccI9cStQbQdystvc6TvxD", "2U9v51tNOoLRhwrU6j83uU")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	for i, track := range tracks {
-		s := pool.TrackToSong(&track.SimpleTrack, (i+1)*-100)
-		//fmt.Println(d.pool)
-		heap.Push(&d.pool, s)
-		//fmt.Println(d.pool)
-	}
-
 	//TODO: only call this function only after the the current song finishes
 	//d.pool.AddNextSong(&d.client)
 
