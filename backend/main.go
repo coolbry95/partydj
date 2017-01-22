@@ -25,7 +25,7 @@ import (
 // redirectURI is the OAuth redirect URI for the application.
 // You must register an application at Spotify's developer portal
 // and enter this value.
-const redirectURI = "https://linode.shellcode.in/callback"
+const redirectURI = "http://localhost:8080/callback"
 
 var (
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
@@ -66,7 +66,7 @@ func main() {
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
-	go http.ListenAndServe(":6060", r)
+	go http.ListenAndServe(":8080", r)
 
 	// wait for auth to complete
 	d.client = <-ch
@@ -87,8 +87,30 @@ func main() {
 
 	d.pool.UserID = userID.ID
 
+	// Begin the play loop when the server begins for spartahack
+	d.BeginPlayLoop()
+
 	block := make(chan struct{})
 	<-block
+}
+
+func (d *DI) BeginPlayLoop() {
+	//fmt.Println("Beginning play loop...")
+	// Start the loop after 10 seconds of pool creation
+	time.Sleep(10 * time.Second)
+
+	go func() {
+		song := heap.Pop(&d.pool).(*pool.Song)
+		heap.Push(&d.pool, song)
+		// song duration is in milliseconds
+		songTime := time.Duration(((song.Duration)/1000) + 15) // 15 seconds + song length
+		fmt.Print(songTime * time.Second)
+		time.Sleep(songTime * time.Second)
+		d.pool.AddNextSong(&d.client)
+		//fmt.Println("Now playing new song...")
+		d.BeginPlayLoop()
+		//return // do this to kill the parent goroutine?
+	}()
 }
 
 func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
@@ -122,6 +144,8 @@ func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	UserIDToPoolID[userIDNumber] = poolIDNumberStr
+	// this is the long pool id that links to the long id
+	w.Header().Add("long_pool_id", PoolShortIDToLongID[poolIDNumber])
 	// Let the user know the request was accepted
 	w.WriteHeader(http.StatusOK)
 }
@@ -135,8 +159,10 @@ func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
+
 	// TODO check for user ID to see if they already voted
-	songID := chi.URLParam(r, "songID")
+	songID := chi.URLParam(r, "songId")
 	userID := r.PostFormValue("userId")
 
 	if len(userID) == 0 || len(songID) == 0 {
@@ -155,8 +181,10 @@ func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
+
 	// TODO check for user ID to see if they already voted
-	songID := chi.URLParam(r, "songID")
+	songID := chi.URLParam(r, "songId")
 	userID := r.PostFormValue("userId")
 	//poolID := chi.URLParam(r, "poolID")
 
@@ -178,6 +206,8 @@ func (d *DI) createPool(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
+
 	userid, err := d.client.CurrentUser()
 	if err != nil {
 		log.Println(err)
@@ -199,15 +229,6 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	d.pool.UserToVoteMap = make(map[string][]string)
 
 	//TODO: only call this function only after the the current song finishes
-	song := heap.Pop(&d.pool).(*pool.Song)
-	heap.Push(&d.pool, song)
-
-	go func() {
-		songTime := song.Duration + 15
-		time.Sleep(time.Duration(songTime) * time.Second)
-		d.pool.AddNextSong(&d.client)
-		fmt.Println("Now playing new song...")
-	}()
 
 	json.NewEncoder(w).Encode(d.pool)
 	return
