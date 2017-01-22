@@ -58,6 +58,8 @@ func main() {
 	r.Post("/downvote/:poolID/:songID", d.downVote)
 	r.Post("/join_pool", d.joinPool)
 
+	r.FileServer("/files", http.Dir("/home/coolbry95/gosrc/src/github.com/coolbry95/partydj/website"))
+
 	// Authenticate the users spotify account
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
@@ -190,7 +192,7 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 
 	d.pool.SongHeap = make([]*pool.Song, 0, 100)
 	for i, track := range playlist.Tracks {
-		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track.SimpleTrack, i))
+		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track, i))
 	}
 
 	//TODO: only call this function only after the the current song finishes
