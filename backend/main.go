@@ -14,19 +14,19 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/coolbry95/partydj/backend/pool"
 	"github.com/pressly/chi"
 	"github.com/zmb3/spotify"
-	"github.com/coolbry95/partydj/backend/pool"
 )
 
 // redirectURI is the OAuth redirect URI for the application.
 // You must register an application at Spotify's developer portal
 // and enter this value.
-const redirectURI = "https://linode.shellcode.in/callback"
+const redirectURI = "http://localhost:8080/callback"
 
 var (
-	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
-	spotify.ScopePlaylistModifyPublic)
+	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
+		spotify.ScopePlaylistModifyPublic)
 	ch    = make(chan spotify.Client)
 	state = "stateless"
 )
@@ -55,7 +55,7 @@ func main() {
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
-	go http.ListenAndServe(":6060", r)
+	go http.ListenAndServe(":8080", r)
 
 	// wait for auth to complete
 	d.client = <-ch
@@ -116,19 +116,24 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	d.pool.SongHeap = make([]*pool.Song, 0, 2)
+	d.pool.SongHeap = make([]*pool.Song, 0, 10)
 	for i, track := range playlist.Tracks {
-		s := &pool.Song{
-			ID:       track.Track.ID,
-			Name:     track.Track.Name,
-			Duration: track.Track.Duration,
-			Album:    track.Track.Album.Name,
-			Images:   track.Track.Album.Images,
-			Artists:  track.Track.Artists,
-			Priority: i,
-		}
-		d.pool.SongHeap = append(d.pool.SongHeap, s)
+		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track.SimpleTrack, i))
 	}
+
+	tracks, err := d.client.GetTracks("7ccI9cStQbQdystvc6TvxD", "2U9v51tNOoLRhwrU6j83uU")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for i, track := range tracks {
+		s := pool.TrackToSong(&track.SimpleTrack, (i+1)*-100)
+		//fmt.Println(d.pool)
+		heap.Push(&d.pool, s)
+		//fmt.Println(d.pool)
+	}
+
+	d.pool.AddNextSong(&d.client)
 
 	json.NewEncoder(w).Encode(d.pool)
 	return
