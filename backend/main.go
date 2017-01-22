@@ -26,8 +26,8 @@ import (
 const redirectURI = "https://linode.shellcode.in/callback"
 
 var (
-	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
-	spotify.ScopePlaylistModifyPublic)
+	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
+		spotify.ScopePlaylistModifyPublic)
 	ch    = make(chan spotify.Client)
 	state = "stateless"
 )
@@ -163,19 +163,13 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	d.pool.SongHeap = make([]*pool.Song, 0, 2)
+	d.pool.SongHeap = make([]*pool.Song, 0, 10)
 	for i, track := range playlist.Tracks {
-		s := &pool.Song{
-			ID:       track.Track.ID,
-			Name:     track.Track.Name,
-			Duration: track.Track.Duration,
-			Album:    track.Track.Album.Name,
-			Images:   track.Track.Album.Images,
-			Artists:  track.Track.Artists,
-			Priority: i,
-		}
-		d.pool.SongHeap = append(d.pool.SongHeap, s)
+		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track.SimpleTrack, i))
 	}
+
+	//TODO: only call this function only after the the current song finishes
+	//d.pool.AddNextSong(&d.client)
 
 	json.NewEncoder(w).Encode(d.pool)
 	return
