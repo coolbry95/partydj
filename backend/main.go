@@ -20,12 +20,13 @@ import (
 	"github.com/coolbry95/partydj/backend/pool"
 	"github.com/pressly/chi"
 	"github.com/zmb3/spotify"
+	"golang.org/x/net/html"
 )
 
 // redirectURI is the OAuth redirect URI for the application.
 // You must register an application at Spotify's developer portal
 // and enter this value.
-const redirectURI = "https://linode.shellcode.in/callback"
+const redirectURI = "http://localhost:8080/callback"
 
 var (
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
@@ -59,6 +60,7 @@ func main() {
 	r.Post("/upvote/:poolID/:songID", d.upVote)
 	r.Post("/downvote/:poolID/:songID", d.downVote)
 	r.Post("/join_pool", d.joinPool)
+	r.Post("/search_for_songs", d.searchForSongs)
 
 	r.FileServer("/files", http.Dir("/home/coolbry95/gosrc/src/github.com/coolbry95/partydj/website"))
 
@@ -66,7 +68,7 @@ func main() {
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
-	go http.ListenAndServe(":6060", r)
+	go http.ListenAndServe(":8080", r)
 
 	// wait for auth to complete
 	d.client = <-ch
@@ -92,6 +94,49 @@ func main() {
 
 	block := make(chan struct{})
 	<-block
+}
+
+func (d *DI) searchForSongs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
+
+	searchQuery := html.EscapeString(r.PostFormValue("search_query"))
+	numberOfSongsStr := r.PostFormValue("number_of_results")
+
+	// Both must be present
+	if len(searchQuery) == 0 || len(numberOfSongsStr) == 0 {
+		w.WriteHeader(http.StatusPartialContent)
+		fmt.Println("BADREQUEST: (searchForSongs) - One of the parameters were empty: ", "search query:",
+			searchQuery, "num of songs:", numberOfSongsStr)
+		return
+	}
+
+	numberOfSongs, err := strconv.Atoi(numberOfSongsStr)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	results, err := d.client.Search(searchQuery, spotify.SearchTypeTrack)
+
+	if err != nil {
+		fmt.Println("ERROR: (searchForSongs) - ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	songsToSend := make([]*pool.Song, 0, numberOfSongs)
+	for index, track := range results.Tracks.Tracks {
+		if index > numberOfSongs {
+			break
+		} else {
+			song := pool.TrackToSong(&track, 0)
+			songsToSend = append(songsToSend, song)
+		}
+	}
+
+	json.NewEncoder(w).Encode(songsToSend)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (d *DI) BeginPlayLoop() {
@@ -122,7 +167,7 @@ func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
 	// Both must be present
 	if len(userIDNumber) == 0 || len(poolIDNumberStr) == 0 {
 		w.WriteHeader(http.StatusPartialContent)
-		fmt.Println("One of the parameters were empty: ", "userId:",
+		fmt.Println("BADREQUEST: (joinPool) - One of the parameters were empty: ", "userId:",
 			userIDNumber, "poolShortId:", poolIDNumberStr)
 		return
 	}
@@ -132,7 +177,7 @@ func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
 	// Make sure the poolIDNumber is a valid integer, otherwise
 	// respond with Status partial content
 	if convErr != nil {
-		w.WriteHeader(http.StatusPartialContent)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Println("Conversion error: ", convErr)
 		return
 	}
@@ -151,21 +196,33 @@ func (d *DI) joinPool(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) addSong(w http.ResponseWriter, r *http.Request) {
+	userID := r.PostFormValue("userId")
 	songID := chi.URLParam(r, "songID")
-	//poolID := chi.URLParam(r, "poolID")
+
+	// Both must be present
+	if len(userID) == 0 {
+		w.WriteHeader(http.StatusPartialContent)
+		fmt.Println("One of the parameters were empty: ", "userId:", userID)
+		return
+	}
+
+	if _, ok := UserIDToPoolID[userID]; ok == false {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	s := &pool.Song{ID: spotify.ID(songID)}
 	heap.Push(&d.pool, s)
 }
 
 func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "songID")
 	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
 
 	// TODO check for user ID to see if they already voted
-	songID := chi.URLParam(r, "songId")
 	userID := r.PostFormValue("userId")
 
-	if len(userID) == 0 || len(songID) == 0 {
+	if len(userID) == 0 {
 		w.WriteHeader(http.StatusPartialContent)
 		return
 	}
@@ -181,14 +238,14 @@ func (d *DI) upVote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "songID")
 	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
 
 	// TODO check for user ID to see if they already voted
-	songID := chi.URLParam(r, "songId")
 	userID := r.PostFormValue("userId")
 	//poolID := chi.URLParam(r, "poolID")
 
-	if len(userID) == 0 || len(songID) == 0 {
+	if len(userID) == 0 {
 		w.WriteHeader(http.StatusPartialContent)
 		return
 	}
