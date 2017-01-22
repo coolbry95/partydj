@@ -196,7 +196,10 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO: only call this function only after the the current song finishes
-	songTime := heap.Pop(&d.pool).(*pool.Song).Duration + 15
+	song := heap.Pop(&d.pool).(*pool.Song)
+	heap.Push(&d.pool, song)
+	songTime := song.Duration + 15
+	
 	timerr := time.NewTimer(time.Duration(songTime) * time.Second)
 	go func() {
 		<-timerr.C
