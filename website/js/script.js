@@ -41,9 +41,13 @@ function LoadJSON(queryURL, queryParam, queryMethod, storageKey, callback, attri
   //httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
   httpRequest.onload = function(e){
     if (httpRequest.readyState === 4 && httpRequest.status === 200){
-      localStorage.setItem(storageKey, httpRequest.responseText);
-      if (callback !== undefined && callback !== null)
-        callback(httpRequest.responseText === "" ? undefined : JSON.parse(httpRequest.responseText), attribute);
+      var response = httpRequest.responseText === "" ? undefined : JSON.parse(httpRequest.responseText);
+      if (response !== undefined && response !== null && response !== ""){
+        localStorage.setItem(storageKey, httpRequest.responseText);
+        localStorage.setItem("playlistid",response["playlistid"]);
+      }
+      
+      if (callback !== undefined && callback !== null) callback(response, attribute);
     }
     else
       console.error(httpRequest.statusText);
@@ -115,7 +119,7 @@ function QuitPool(){
 
 function VoteAction(elem, upvote){
   console.log(BaseURL + (upvote ? "upvote" : "downvote"));
-  var queryResult = LoadJSON(BaseURL + (upvote ? "upvote" : "downvote"), {"songId": elem.getAttribute("data-track"), "userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {"refresh": true});
+  var queryResult = LoadJSON(BaseURL + (upvote ? "upvote/" : "downvote/") +  localStorage["playlistid"] + "/" + elem.getAttribute("data-track"), {"userId": localStorage.getItem("uuid")}, "POST", "temp", Finalize, {"refresh": true});
 }
 
 function SearchMusic(){
