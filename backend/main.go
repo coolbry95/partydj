@@ -22,7 +22,7 @@ import (
 // redirectURI is the OAuth redirect URI for the application.
 // You must register an application at Spotify's developer portal
 // and enter this value.
-const redirectURI = "http://localhost:8080/callback"
+const redirectURI = "https://linode.shellcode.in/callback"
 
 var (
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
@@ -55,7 +55,7 @@ func main() {
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
-	go http.ListenAndServe(":8080", r)
+	go http.ListenAndServe(":6060", r)
 
 	// wait for auth to complete
 	d.client = <-ch
