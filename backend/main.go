@@ -26,7 +26,7 @@ import (
 // redirectURI is the OAuth redirect URI for the application.
 // You must register an application at Spotify's developer portal
 // and enter this value.
-const redirectURI = "http://localhost:8080/callback"
+const redirectURI = "https://linode.shellcode.in/callback"
 
 var (
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserLibraryModify, spotify.ScopePlaylistModifyPrivate,
@@ -55,20 +55,20 @@ func main() {
 	})
 	r.Get("/callback", completeAuth)
 	r.Get("/getpool", d.getPool)
-	r.Post("/createpool", d.createPool)
+	//r.Post("/createpool", d.createPool)
 	r.Post("/add_song/:poolID/:songID", d.addSong)
 	r.Post("/upvote/:poolID/:songID", d.upVote)
 	r.Post("/downvote/:poolID/:songID", d.downVote)
 	r.Post("/join_pool", d.joinPool)
 	r.Post("/search_for_songs", d.searchForSongs)
 
-	r.FileServer("/files", http.Dir("/home/coolbry95/gosrc/src/github.com/coolbry95/partydj/website"))
+	r.FileServer("/files", http.Dir("../website"))
 
 	// Authenticate the users spotify account
 	url := auth.AuthURL(state)
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
-	go http.ListenAndServe(":8080", r)
+	go http.ListenAndServe(":6060", r)
 
 	// wait for auth to complete
 	d.client = <-ch
@@ -88,6 +88,9 @@ func main() {
 	}
 
 	d.pool.UserID = userID.ID
+
+	// This is hardcoded for the showcase
+	d.createPool()
 
 	// Begin the play loop when the server begins for spartahack
 	d.BeginPlayLoop()
@@ -259,12 +262,7 @@ func (d *DI) downVote(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (d *DI) createPool(w http.ResponseWriter, r *http.Request) {
-}
-
-func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
-
+func (d *DI) createPool() {
 	userid, err := d.client.CurrentUser()
 	if err != nil {
 		log.Println(err)
@@ -284,8 +282,14 @@ func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
 		d.pool.SongHeap = append(d.pool.SongHeap, pool.TrackToSong(&track.Track, i))
 	}
 	d.pool.UserToVoteMap = make(map[string][]string)
+}
 
-	//TODO: only call this function only after the the current song finishes
+func (d *DI) getPool(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
+
+	if d.pool.SongHeap == nil {
+		d.createPool()
+	}
 
 	json.NewEncoder(w).Encode(d.pool)
 	return
