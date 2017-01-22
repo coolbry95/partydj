@@ -91,7 +91,7 @@
 
 .container > .main > .list li .control {
   margin: 0;
-  width: 52px;
+  width: 25px;
   float: right;
   display: flex;
   flex-flow: row wrap;
@@ -99,14 +99,14 @@
   align-content: center;
 }
 
-.container > .main > .list li .control .count {
-  padding: 1px;
-  width: 28px;
+.container > .main > .list li .priority {
+  padding: 20px 1px;
+  width: auto;
 }
 
 .container > .main > .list li .control .vote {
   margin: -1px;
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
   cursor: pointer;
 }
