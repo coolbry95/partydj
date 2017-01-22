@@ -21,20 +21,22 @@ footer > .play .cover {
 }
 
 footer > .play .meta {
-  color: lightgray;
+  width: 72%;
+  color: rgba(200, 200, 200, 1);
   display: flex;
   flex-flow: column nowrap;
-  justify-content: space-around;
+  justify-content: center;
   align-content: flex-start;
 }
 
 footer > .play .meta p {
-  margin: 0;
+  margin: 3px;
   display: inline-block;
-  font-size: 16px;
-  line-height: 20px;
+  font-size: 13px;
+  line-height: 13px;
 }
 
 footer > .play .control {
-  
+  width: 25px;
+  padding: 10px 5px;
 }
